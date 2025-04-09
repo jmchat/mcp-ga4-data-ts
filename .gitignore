@@ -15,8 +15,8 @@ build/
 !package.json
 !package-lock.json
 !tsconfig.json
-!claude-mcp-config.json
 !mcp-config.json
+claude-mcp-config.json
 
 # OS specific files
 .DS_Store
