@@ -1,0 +1,144 @@
+{
+  "name": "google-analytics-data",
+  "version": "1.0.0",
+  "description": "Google Analytics Data API MCP Server",
+  "transport": {
+    "type": "stdio"
+  },
+  "tools": [
+    {
+      "name": "ga4_data_api_run_report",
+      "description": "Run a report using the Google Analytics 4 Data API.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "The numeric ID of the GA4 property (e.g., '123456789')"
+          },
+          "date_ranges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "start_date": {
+                  "type": "string",
+                  "description": "Start date in YYYY-MM-DD format"
+                },
+                "end_date": {
+                  "type": "string",
+                  "description": "End date in YYYY-MM-DD format"
+                }
+              },
+              "required": ["start_date", "end_date"]
+            },
+            "description": "Date ranges for the report"
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of dimensions (e.g., ['date', 'country', 'deviceCategory'])"
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of metrics as strings (e.g., ['activeUsers', 'sessions']) - do NOT use objects like [{name: 'activeUsers'}]"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Optional limit for the number of rows returned"
+          },
+          "offset": {
+            "type": "number",
+            "description": "Optional offset for pagination"
+          },
+          "dimension_filter": {
+            "type": "string",
+            "description": "Optional JSON string with dimension filter"
+          },
+          "metric_filter": {
+            "type": "string",
+            "description": "Optional JSON string with metric filter"
+          },
+          "order_bys": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "dimension": {
+                  "type": "string"
+                },
+                "metric": {
+                  "type": "string"
+                },
+                "desc": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "description": "Optional ordering of results"
+          }
+        },
+        "required": ["property_id", "date_ranges", "dimensions", "metrics"]
+      }
+    },
+    {
+      "name": "ga4_data_api_run_realtime_report",
+      "description": "Run a realtime report using the Google Analytics 4 Data API.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "The numeric ID of the GA4 property (e.g., '123456789')"
+          },
+          "dimensions": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of dimensions (e.g., ['country', 'deviceCategory'])"
+          },
+          "metrics": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "List of metrics (e.g., ['activeUsers', 'screenPageViews'])"
+          },
+          "limit": {
+            "type": "number",
+            "description": "Optional limit for the number of rows returned"
+          },
+          "dimension_filter": {
+            "type": "string",
+            "description": "Optional JSON string with dimension filter"
+          },
+          "metric_filter": {
+            "type": "string",
+            "description": "Optional JSON string with metric filter"
+          }
+        },
+        "required": ["property_id", "dimensions", "metrics"]
+      }
+    },
+    {
+      "name": "ga4_data_api_get_metadata",
+      "description": "Get metadata about available dimensions and metrics in GA4.",
+      "parameters": {
+        "type": "object",
+        "properties": {
+          "property_id": {
+            "type": "string",
+            "description": "The numeric ID of the GA4 property (e.g., '123456789')"
+          }
+        },
+        "required": ["property_id"]
+      }
+    }
+  ]
+}
