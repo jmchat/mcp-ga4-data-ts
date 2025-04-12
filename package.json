@@ -1,6 +1,6 @@
 {
   "name": "mcp-ga4-data",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "Google Analytics 4 Data API tools via Model Context Protocol",
   "main": "dist/index.js",
   "bin": {
