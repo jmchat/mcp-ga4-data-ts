@@ -300,6 +300,154 @@ server.tool(
     }
 );
 
+// --- Tool: Run Pivot Report ---
+server.tool(
+    "ga4_data_api_run_pivot_report",
+    "Run a pivot report using the Google Analytics 4 Data API.",
+    {
+        property_id: z.string().regex(/^\d+$/, "Property ID must be numeric").describe("The numeric ID of the GA4 property (e.g., '123456789')"),
+        date_ranges: z.array(z.object({
+            start_date: z.string().describe("Start date in YYYY-MM-DD format"),
+            end_date: z.string().describe("End date in YYYY-MM-DD format")
+        })).describe("Date ranges for the report"),
+        dimensions: z.array(z.string()).describe("List of dimensions (e.g., ['date', 'country', 'deviceCategory'])"),
+        metrics: z.array(z.string()).describe("List of metrics (e.g., ['activeUsers', 'sessions', 'screenPageViews'])"),
+        pivots: z.array(z.object({
+            field_names: z.array(z.string()).describe("List of dimensions to pivot on"),
+            limit: z.number().optional().describe("Optional limit for the number of pivot rows returned"),
+            offset: z.number().optional().describe("Optional offset for pagination in pivot rows"),
+            order_bys: z.array(z.object({
+                dimension: z.string().optional(),
+                metric: z.string().optional(),
+                desc: z.boolean().optional()
+            })).optional().describe("Optional ordering of pivot results")
+        })).describe("Pivot specifications"),
+        limit: z.number().optional().describe("Optional limit for the number of rows returned"),
+        offset: z.number().optional().describe("Optional offset for pagination"),
+        dimension_filter: z.string().optional().describe("Optional JSON string with dimension filter"),
+        metric_filter: z.string().optional().describe("Optional JSON string with metric filter"),
+        order_bys: z.array(z.object({
+            dimension: z.string().optional(),
+            metric: z.string().optional(),
+            desc: z.boolean().optional()
+        })).optional().describe("Optional ordering of results")
+    },
+    async ({ property_id, date_ranges, dimensions, metrics, pivots, limit, offset, dimension_filter, metric_filter, order_bys }): Promise<CallToolResult> => {
+        if (!analyticsDataClient) {
+            return createErrorResponse("GA Data Client is not initialized.");
+        }
+
+        console.error(`Running tool: ga4_data_api_run_pivot_report for property ${property_id}`); // Log to stderr
+
+        try {
+            // Prepare the request
+            const request: any = {
+                property: `properties/${property_id}`,
+                dateRanges: date_ranges.map(range => ({
+                    startDate: range.start_date,
+                    endDate: range.end_date
+                })),
+                dimensions: dimensions.map(dim => ({ name: dim })),
+                metrics: metrics.map(metric => ({ name: metric })),
+                pivots: pivots.map(pivot => ({
+                    fieldNames: pivot.field_names,
+                    limit: pivot.limit,
+                    offset: pivot.offset,
+                    orderBys: pivot.order_bys?.map(orderBy => {
+                        const result: any = {};
+                        if (orderBy.dimension) result.dimension = { dimensionName: orderBy.dimension };
+                        if (orderBy.metric) result.metric = { metricName: orderBy.metric };
+                        if (orderBy.desc !== undefined) result.desc = orderBy.desc;
+                        return result;
+                    })
+                }))
+            };
+
+            // Add optional parameters if provided
+            if (limit !== undefined) {
+                request.limit = limit;
+            }
+
+            if (offset !== undefined) {
+                request.offset = offset;
+            }
+
+            // Parse and add dimension filter if provided
+            if (dimension_filter) {
+                try {
+                    request.dimensionFilter = JSON.parse(dimension_filter);
+                } catch (error) {
+                    return createErrorResponse("Invalid dimension_filter JSON format", error);
+                }
+            }
+
+            // Parse and add metric filter if provided
+            if (metric_filter) {
+                try {
+                    request.metricFilter = JSON.parse(metric_filter);
+                } catch (error) {
+                    return createErrorResponse("Invalid metric_filter JSON format", error);
+                }
+            }
+
+            // Add order bys if provided
+            if (order_bys && order_bys.length > 0) {
+                request.orderBys = order_bys.map(orderBy => {
+                    const result: any = {};
+                    if (orderBy.dimension) result.dimension = { dimensionName: orderBy.dimension };
+                    if (orderBy.metric) result.metric = { metricName: orderBy.metric };
+                    if (orderBy.desc !== undefined) result.desc = orderBy.desc;
+                    return result;
+                });
+            }
+
+            console.error('API Request (ga4_data_api_run_pivot_report):', JSON.stringify(request, null, 2));
+
+            // Run the pivot report
+            const [response] = await analyticsDataClient.runPivotReport(request);
+
+            // Format the response
+            const formattedResponse = {
+                pivotHeaders: response.pivotHeaders?.map((header: any) => ({
+                    dimensionValues: header.dimensionValues?.map((value: any) => value.value) || [],
+                })) || [],
+                dimensionHeaders: response.dimensionHeaders?.map(header => header.name) || [],
+                metricHeaders: response.metricHeaders?.map(header => header.name) || [],
+                rows: response.rows?.map(row => {
+                    return {
+                        dimensionValues: row.dimensionValues?.map(value => value.value) || [],
+                        metricValues: row.metricValues?.map(value => value.value) || [],
+                        pivotValues: (row as any).pivotValues?.map((pivotValueGroup: any) => ({
+                            values: pivotValueGroup.values?.map((value: any) => value.value) || []
+                        })) || []
+                    };
+                }) || [],
+                metadata: response.metadata,
+                kind: response.kind
+            };
+
+            return {
+                content: [
+                    {
+                        type: "text",
+                        text: JSON.stringify(formattedResponse, null, 2),
+                    },
+                ],
+            };
+        } catch (error: any) {
+            // Handle API-specific errors
+            if (error.code === 5) { // gRPC code 5 = NOT_FOUND
+                return createErrorResponse(`Property '${property_id}' not found.`, error);
+            }
+            if (error.code === 7) { // gRPC code 7 = PERMISSION_DENIED
+                return createErrorResponse(`Permission denied to access property '${property_id}'. Check Service Account permissions in GA4.`, error);
+            }
+            
+            return createErrorResponse(`Error running pivot report for property '${property_id}'`, error);
+        }
+    }
+)
+
 // --- Tool: Get Metadata ---
 server.tool(
     "ga4_data_api_get_metadata",
