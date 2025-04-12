@@ -69,6 +69,7 @@ The MCP provides the following functions:
 
 ### Reporting Functions
 - `ga4_data_api_run_report` - Run a standard GA4 report with dimensions and metrics
+- `ga4_data_api_run_pivot_report` - Run a pivot report with dimensions, metrics and pivot specifications
 - `ga4_data_api_run_realtime_report` - Run a realtime GA4 report with dimensions and metrics
 - `ga4_data_api_get_metadata` - Get metadata about available dimensions and metrics
 
