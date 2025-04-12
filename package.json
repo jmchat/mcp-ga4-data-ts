@@ -25,6 +25,14 @@
   ],
   "author": "",
   "license": "ISC",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jmchat/mcp-ga4-data-ts.git"
+  },
+  "bugs": {
+    "url": "https://github.com/jmchat/mcp-ga4-data-ts/issues"
+  },
+  "homepage": "https://github.com/jmchat/mcp-ga4-data-ts#readme",
   "dependencies": {
     "@google-analytics/admin": "^8.1.0",
     "@google-analytics/data": "^4.12.1",
